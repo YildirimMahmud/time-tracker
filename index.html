@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Time Tracker</title>
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-clock"></i> Time Tracker</h1>
+        <nav>
+            <ul>
+                <li><a href="#day"><i class="fas fa-calendar-day"></i> Today</a></li>
+                <li><a href="#week"><i class="fas fa-chart-bar"></i> Week</a></li>
+                <li><a href="#month"><i class="fas fa-chart-line"></i> Month</a></li>
+                <li><a href="#compare"><i class="fas fa-exchange-alt"></i> Compare</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Offline Warning -->
+    <div class="offline-warning" style="display: none;">
+        <i class="fas fa-wifi"></i> Offline Mode - Changes will sync when online
+    </div>
+
+    <!-- Main Content Sections -->
+    <section id="day" class="view-section">
+        <h2><i class="fas fa-calendar-day"></i> Daily Time Slots</h2>
+        <div id="time-grid" class="grid-container"></div>
+    </section>
+
+    <section id="week" class="view-section">
+        <h2><i class="fas fa-chart-bar"></i> Weekly Summary</h2>
+        <canvas id="weekly-chart"></canvas>
+    </section>
+
+    <section id="month" class="view-section">
+        <h2><i class="fas fa-chart-line"></i> Monthly Overview</h2>
+        <canvas id="monthly-chart"></canvas>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="compare" class="view-section">
+        <h2><i class="fas fa-exchange-alt"></i> Compare Time Usage</h2>
+        <div class="comparison-options">
+            <label for="compare-type">Compare:</label>
+            <select id="compare-type">
+                <option value="day">Day vs Day</option>
+                <option value="week">Week vs Week</option>
+                <option value="month">Month vs Month</option>
+            </select>
+
+            <div id="day-comparison" class="comparison-section">
+                <input type="date" id="first-day">
+                <input type="date" id="second-day">
+                <button id="compare-days">Compare</button>
+            </div>
+
+            <div id="week-comparison" class="comparison-section">
+                <input type="week" id="first-week">
+                <input type="week" id="second-week">
+                <button id="compare-weeks">Compare</button>
+            </div>
+
+            <div id="month-comparison" class="comparison-section">
+                <input type="month" id="first-month">
+                <input type="month" id="second-month">
+                <button id="compare-months">Compare</button>
+            </div>
+        </div>
+        <canvas id="comparison-chart"></canvas>
+    </section>
+
+    <!-- Data Management Buttons -->
+    <div class="data-actions">
+        <button onclick="exportData()" title="Export Data">
+            <i class="fas fa-download"></i>
+        </button>
+        <button onclick="importData()" title="Import Data">
+            <i class="fas fa-upload"></i>
+        </button>
+        <input type="file" id="import-file" hidden accept=".json">
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Time Tracker | Works Offline</p>
+    </footer>
+
+    <!-- App Installation Prompt -->
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+        <p>Install Time Tracker for better experience?</p>
+        <button id="installButton">Install</button>
+        <button onclick="dismissInstall()">Later</button>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registered');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        // Install Prompt Handling
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').style.display = 'block';
+        });
+
+        document.getElementById('installButton').addEventListener('click', () => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(choiceResult => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted install');
+                }
+                deferredPrompt = null;
+            });
+        });
+
+        function dismissInstall() {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
