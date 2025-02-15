@@ -86,6 +86,7 @@ function handleSlotClick(index) {
       slot.timestamp = new Date().toISOString();
       saveToStorage();
       initializeTimeGrid();
+      initializeCharts();
     }
   } else {
     alert('This time slot is not currently available for editing');
@@ -113,6 +114,7 @@ function autoFillMissedSlots() {
   
   saveToStorage();
   initializeTimeGrid();
+  initializeCharts();
 }
 
 // ========================
@@ -165,47 +167,88 @@ function importData() {
 
 let weeklyChart, monthlyChart, comparisonChart;
 
-function initializeCharts() {
-  // Destroy existing chart instances
-  if (weeklyChart) weeklyChart.destroy();
-  if (monthlyChart) monthlyChart.destroy();
-  if (comparisonChart) comparisonChart.destroy();
-
-  // Weekly Chart
-  weeklyChart = new Chart(document.getElementById('weekly-chart'), {
-    type: 'bar',
-    data: getWeeklyData(),
-    options: chartOptions('Weekly Activity Distribution')
-  });
-
-  // Monthly Chart
-  monthlyChart = new Chart(document.getElementById('monthly-chart'), {
-    type: 'line',
-    data: getMonthlyData(),
-    options: chartOptions('Monthly Progress')
-  });
-
-  // Comparison Chart
-  comparisonChart = new Chart(document.getElementById('comparison-chart'), {
-    type: 'bar',
-    data: { labels: [], datasets: [] },
-    options: chartOptions('Comparison View')
-  });
+function getWeekNumber(dateString) {
+  const date = new Date(dateString);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 4 - (date.getDay() || 7));
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
 }
 
 function getWeeklyData() {
-  // Implementation for weekly data aggregation
+  const weeks = {};
+  Object.keys(appData.timeData).forEach(date => {
+    const weekNumber = getWeekNumber(date);
+    if (!weeks[weekNumber]) {
+      weeks[weekNumber] = { productive: 0, missed: 0 };
+    }
+    
+    appData.timeData[date].forEach(slot => {
+      if (slot.value && slot.value !== 'F') weeks[weekNumber].productive++;
+      if (slot.value === 'F') weeks[weekNumber].missed++;
+    });
+  });
+
+  const labels = Object.keys(weeks).sort().map(w => `Week ${w}`);
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Productive Slots',
+        data: labels.map(w => weeks[w.split(' ')[1]].productive),
+        backgroundColor: 'rgba(75, 192, 192, 0.5)'
+      },
+      {
+        label: 'Missed Slots',
+        data: labels.map(w => weeks[w.split(' ')[1]].missed),
+        backgroundColor: 'rgba(255, 99, 132, 0.5)'
+      }
+    ]
+  };
 }
 
 function getMonthlyData() {
-  // Implementation for monthly data aggregation
+  const months = {};
+  Object.keys(appData.timeData).forEach(date => {
+    const month = date.substring(0, 7);
+    if (!months[month]) {
+      months[month] = { productive: 0, missed: 0 };
+    }
+    
+    appData.timeData[date].forEach(slot => {
+      if (slot.value && slot.value !== 'F') months[month].productive++;
+      if (slot.value === 'F') months[month].missed++;
+    });
+  });
+
+  const labels = Object.keys(months).sort();
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Productive Slots',
+        data: labels.map(m => months[m].productive),
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: true
+      },
+      {
+        label: 'Missed Slots',
+        data: labels.map(m => months[m].missed),
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        fill: true
+      }
+    ]
+  };
 }
 
 function chartOptions(title) {
   return {
     responsive: true,
     plugins: {
-      title: { display: true, text: title }
+      title: { display: true, text: title },
+      legend: { position: 'bottom' }
     }
   };
 }
@@ -213,6 +256,38 @@ function chartOptions(title) {
 // ========================
 // COMPARISON SYSTEM
 // ========================
+
+function getRandomColor() {
+  return `hsl(${Math.random() * 360}, 70%, 50%)`;
+}
+
+function updateComparisonChart(labels) {
+  const datasets = labels.map(label => {
+    let dataPoints = [];
+    if (label.startsWith('Week')) {
+      const weekNumber = label.split(' ')[1];
+      dataPoints = Object.keys(appData.timeData)
+        .filter(date => getWeekNumber(date) === parseInt(weekNumber))
+        .flatMap(date => appData.timeData[date]);
+    } else if (label.includes('-')) { // Month format YYYY-MM
+      dataPoints = Object.keys(appData.timeData)
+        .filter(date => date.startsWith(label))
+        .flatMap(date => appData.timeData[date]);
+    } else { // Daily comparison
+      dataPoints = appData.timeData[label] || [];
+    }
+
+    return {
+      label: `${label} (Productive)`,
+      data: [dataPoints.filter(slot => slot.value && slot.value !== 'F').length],
+      backgroundColor: getRandomColor()
+    };
+  });
+
+  comparisonChart.data.labels = labels;
+  comparisonChart.data.datasets = datasets;
+  comparisonChart.update();
+}
 
 document.getElementById('compare-type').addEventListener('change', function() {
   document.querySelectorAll('.comparison-section').forEach(el => {
@@ -227,56 +302,62 @@ document.getElementById('compare-days').addEventListener('click', () => {
   updateComparisonChart([date1, date2]);
 });
 
-// ========================
-// PWA FUNCTIONALITY
-// ========================
-
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  showInstallPromotion();
+document.getElementById('compare-weeks').addEventListener('click', () => {
+  const week1 = document.getElementById('first-week').value;
+  const week2 = document.getElementById('second-week').value;
+  updateComparisonChart([`Week ${getWeekNumber(week1)}`, `Week ${getWeekNumber(week2)}`]);
 });
 
-function showInstallPromotion() {
-  const installBtn = document.createElement('button');
-  installBtn.textContent = 'Install App';
-  installBtn.className = 'install-btn';
-  installBtn.onclick = () => {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(choiceResult => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted install');
-      }
-      deferredPrompt = null;
-    });
-  };
-  document.body.appendChild(installBtn);
-}
+document.getElementById('compare-months').addEventListener('click', () => {
+  const month1 = document.getElementById('first-month').value;
+  const month2 = document.getElementById('second-month').value;
+  updateComparisonChart([month1, month2]);
+});
 
 // ========================
 // INITIALIZATION
 // ========================
 
+function initializeCharts() {
+  [weeklyChart, monthlyChart, comparisonChart].forEach(chart => {
+    if (chart) chart.destroy();
+  });
+
+  weeklyChart = new Chart(document.getElementById('weekly-chart'), {
+    type: 'bar',
+    data: getWeeklyData(),
+    options: chartOptions('Weekly Activity Distribution')
+  });
+
+  monthlyChart = new Chart(document.getElementById('monthly-chart'), {
+    type: 'line',
+    data: getMonthlyData(),
+    options: chartOptions('Monthly Progress')
+  });
+
+  comparisonChart = new Chart(document.getElementById('comparison-chart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [] },
+    options: chartOptions('Comparison View')
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initializeTimeGrid();
   initializeCharts();
-  setInterval(autoFillMissedSlots, 300000); // 5-minute interval
+  setInterval(autoFillMissedSlots, 300000);
   
-  // Service Worker Registration
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
       .then(() => console.log('Service Worker registered'))
       .catch(err => console.log('SW registration failed:', err));
   }
 
-  // Offline Detection
   window.addEventListener('online', () => {
-    document.getElementById('offline-warning').style.display = 'none';
+    document.querySelector('.offline-warning').style.display = 'none';
   });
   
   window.addEventListener('offline', () => {
-    document.getElementById('offline-warning').style.display = 'block';
+    document.querySelector('.offline-warning').style.display = 'block';
   });
 });
