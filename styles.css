@@ -1,3 +1,4 @@
+
 /* ======================== */
 /* CORE STYLES */
 /* ======================== */
@@ -178,6 +179,16 @@ canvas {
 /* COMPARISON SYSTEM */
 /* ======================== */
 
+/* Updated Comparison Section styles */
+.comparison-section {
+  display: none;
+  margin: 1rem 0;
+}
+
+.comparison-section.active {
+  display: block;
+}
+
 .comparison-options {
   display: flex;
   flex-direction: column;
@@ -189,14 +200,6 @@ canvas {
   box-shadow: var(--shadow);
 }
 
-.comparison-section {
-  display: none;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .date-picker-group {
   display: flex;
   gap: 1rem;
@@ -206,12 +209,10 @@ canvas {
 input[type="date"],
 input[type="week"],
 input[type="month"] {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
+  padding: 0.5rem;
+  margin: 0 0.5rem;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-family: inherit;
-  min-width: 200px;
-  transition: var(--transition);
 }
 
 .compare-btn {
@@ -235,21 +236,11 @@ input[type="month"] {
 
 .data-actions {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+  bottom: 20px;
+  right: 20px;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  gap: 10px;
   z-index: 1000;
-}
-
-.data-actions button {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  font-size: 1.2rem;
-  box-shadow: var(--shadow);
-  transition: var(--transition);
 }
 
 .status-bar {
