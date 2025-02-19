@@ -4,23 +4,23 @@
 
 :root {
   /* Color Scheme */
-  --primary-color: #4caf50;
+  --primary-color: #4CAF50;
   --secondary-color: #45a049;
   --background-color: #f4f4f4;
   --text-color: #333;
   --warning-color: #ff4444;
   
   /* Activity Colors */
-  --color-A: #4caf50;
-  --color-B: #2196f3;
-  --color-C: #9c27b0;
-  --color-D: #ff9800;
-  --color-E: #e91e63;
-  --color-F: #f44336;
-  --color-S: #607d8b;
+  --color-A: #4CAF50;
+  --color-B: #2196F3;
+  --color-C: #9C27B0;
+  --color-D: #FF9800;
+  --color-E: #E91E63;
+  --color-F: #F44336;
+  --color-S: #607D8B;
   
   /* Effects */
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
   --transition: all 0.3s ease;
 }
 
@@ -86,39 +86,7 @@ nav ul li a {
 }
 
 nav ul li a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* ======================== */
-/* STATUS BAR */
-/* ======================== */
-
-.status-bar {
-  position: fixed;
-  top: 60px;
-  width: 100%;
-  background: white;
-  padding: 0.5rem 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: var(--shadow);
-  z-index: 999;
-}
-
-.date-indicator {
-  font-weight: 500;
-  color: var(--primary-color);
-}
-
-.offline-warning {
-  background: var(--warning-color);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 25px;
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
+  background-color: rgba(255,255,255,0.1);
 }
 
 /* ======================== */
@@ -190,6 +158,16 @@ h2 {
 /* CHARTS & DATA VISUALIZATION */
 /* ======================== */
 
+.chart-container {
+  position: relative;
+  margin: 2rem auto;
+  max-width: 800px;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
 canvas {
   max-height: 400px;
   min-height: 300px;
@@ -200,7 +178,6 @@ canvas {
 /* COMPARISON SYSTEM */
 /* ======================== */
 
-/* Container for the comparison options */
 .comparison-options {
   display: flex;
   flex-direction: column;
@@ -212,19 +189,13 @@ canvas {
   box-shadow: var(--shadow);
 }
 
-/* Each type of comparison (day, week, month) */
 .comparison-section {
   display: none;
+  gap: 1rem;
   margin: 1rem 0;
 }
-
 .comparison-section.active {
-  display: block;
-}
-
-.date-picker-group {
-  display: flex;
-  gap: 1rem;
+  display: flex !important;
   flex-wrap: wrap;
 }
 
@@ -235,25 +206,20 @@ input[type="month"] {
   margin: 0 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
+  min-width: 200px;
 }
 
 .compare-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: var(--transition);
-}
-
-.compare-btn:hover {
-  background-color: var(--secondary-color);
-  transform: translateY(-1px);
 }
 
 /* ======================== */
-/* DATA MANAGEMENT & ACTIONS */
+/* DATA MANAGEMENT & STATUS */
 /* ======================== */
 
 .data-actions {
@@ -262,26 +228,25 @@ input[type="month"] {
   right: 20px;
   display: flex;
   gap: 10px;
-  z-index: 1000;
 }
 
-.time-info {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: #e3f2fd;
-  border-radius: 4px;
+.data-actions button {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
 }
 
-.s-label {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-color: var(--color-S);
+.offline-warning {
+  background: var(--warning-color);
   color: white;
-  border-radius: 4px;
-  text-align: center;
-  line-height: 24px;
-  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ======================== */
@@ -329,13 +294,7 @@ footer {
   background: var(--primary-color);
   color: white;
   margin-top: 3rem;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.sync-status::before {
-  content: "✓";
-  margin-right: 0.5rem;
-  color: #c8e6c9;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
 }
 
 /* ======================== */
@@ -353,6 +312,11 @@ footer {
 
   .view-section {
     padding: 1rem;
+  }
+
+  .chart-container {
+    margin: 1rem;
+    padding: 0.5rem;
   }
 
   canvas {
