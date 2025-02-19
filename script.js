@@ -1,361 +1,293 @@
-/* ======================== */
-/* CORE STYLES */
-/* ======================== */
+// ========================
+// APP CORE FUNCTIONALITY
+// ========================
+const categories = ["A", "B", "C", "D", "E", "F", "S"];
+const timeIntervals = [...Array(48).keys()].map(i => {
+  const hours = Math.floor(i / 2);
+  const minutes = i % 2 === 0 ? "00" : "30";
+  const period = hours >= 12 ? "PM" : "AM";
+  return `${hours % 12 || 12}:${minutes} ${period}`;
+});
 
-:root {
-  /* Color Scheme */
-  --primary-color: #4CAF50;
-  --secondary-color: #45a049;
-  --background-color: #f4f4f4;
-  --text-color: #333;
-  --warning-color: #ff4444;
+// ========================
+// DATA MANAGEMENT
+// ========================
+let appData = {
+  settings: {
+    autoFill: true,
+    reminderTime: 10,
+    sleepHours: { start: 1, end: 12 } // 12:30 AM to 6:00 AM
+  },
+  timeData: JSON.parse(localStorage.getItem('timeTrackerData')) || {}
+};
+
+function getCurrentDate() {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+}
+
+function saveToStorage() {
+  localStorage.setItem('timeTrackerData', JSON.stringify(appData.timeData));
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist();
+  }
+}
+
+// ========================
+// COMPARISON SECTION HANDLING
+// ========================
+document.getElementById('compare-type').addEventListener('change', function() {
+  const type = this.value;
+  document.querySelectorAll('.comparison-section').forEach(section => {
+    section.classList.remove('active');
+  });
+  document.getElementById(`${type}-comparison`).classList.add('active');
+});
+
+document.getElementById('compare-days').addEventListener('click', () => {
+  const date1 = document.getElementById('first-day').value;
+  const date2 = document.getElementById('second-day').value;
+  updateComparisonChart([date1, date2]);
+});
+
+document.getElementById('compare-weeks').addEventListener('click', () => {
+  const week1 = document.getElementById('first-week').value;
+  const week2 = document.getElementById('second-week').value;
+  updateComparisonChart([`Week ${getWeekNumber(week1)}`, `Week ${getWeekNumber(week2)}`]);
+});
+
+document.getElementById('compare-months').addEventListener('click', () => {
+  const month1 = document.getElementById('first-month').value;
+  const month2 = document.getElementById('second-month').value;
+  updateComparisonChart([month1, month2]);
+});
+
+function updateComparisonChart(labels) {
+  const datasets = [];
+  labels.forEach(label => {
+    let dataPoints = [];
+    if (label.startsWith('Week')) {
+      const [year, week] = label.split(' ')[1].split('-W');
+      dataPoints = Object.keys(appData.timeData)
+        .filter(date => getWeekNumber(date) === parseInt(week))
+        .flatMap(date => appData.timeData[date]);
+    } else if (label.includes('-')) {
+      dataPoints = appData.timeData[label] || [];
+    } else if (label.includes('/')) {
+      dataPoints = Object.keys(appData.timeData)
+        .filter(date => date.startsWith(label.replace('/', '-')))
+        .flatMap(date => appData.timeData[date]);
+    }
+    categories.forEach(c => {
+      datasets.push({
+        label: `${label} - ${c}`,
+        data: [dataPoints.filter(slot => slot.value === c).length],
+        backgroundColor: getColor(c)
+      });
+    });
+  });
+  comparisonChart.data.labels = labels;
+  comparisonChart.data.datasets = datasets;
+  comparisonChart.update();
+}
+
+// ========================
+// TIME GRID MANAGEMENT
+// ========================
+function initializeTimeGrid() {
+  const gridContainer = document.getElementById('time-grid');
+  gridContainer.innerHTML = '';
   
-  /* Activity Colors */
-  --color-A: #4CAF50;
-  --color-B: #2196F3;
-  --color-C: #9C27B0;
-  --color-D: #FF9800;
-  --color-E: #E91E63;
-  --color-F: #F44336;
-  --color-S: #607D8B;
+  const currentDate = getCurrentDate();
   
-  /* Effects */
-  --shadow: 0 2px 8px rgba(0,0,0,0.1);
-  --transition: all 0.3s ease;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-color);
-  line-height: 1.6;
-  min-height: 100vh;
-  padding-top: 60px;
-}
-
-/* ======================== */
-/* HEADER & NAVIGATION */
-/* ======================== */
-
-header {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 1rem;
-  box-shadow: var(--shadow);
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
-}
-
-header h1 {
-  font-size: 2rem;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.5rem 0;
-}
-
-nav ul {
-  list-style: none;
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-}
-
-nav ul li a {
-  color: white;
-  text-decoration: none;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  transition: var(--transition);
-}
-
-nav ul li a:hover {
-  background-color: rgba(255,255,255,0.1);
-}
-
-/* ======================== */
-/* MAIN CONTENT SECTIONS */
-/* ======================== */
-
-.view-section {
-  padding: 2rem 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-h2 {
-  color: var(--primary-color);
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-}
-
-/* Time Grid Styles */
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 0.5rem;
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
-
-.grid-item {
-  padding: 1rem;
-  text-align: center;
-  background: #f8f8f8;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: var(--transition);
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.grid-item.filled {
-  color: white;
-  font-weight: bold;
-}
-
-.grid-item.filled[data-value="A"] { background-color: var(--color-A); }
-.grid-item.filled[data-value="B"] { background-color: var(--color-B); }
-.grid-item.filled[data-value="C"] { background-color: var(--color-C); }
-.grid-item.filled[data-value="D"] { background-color: var(--color-D); }
-.grid-item.filled[data-value="E"] { background-color: var(--color-E); }
-.grid-item.filled[data-value="F"] { background-color: var(--color-F); }
-.grid-item.filled[data-value="S"] { 
-  background-color: var(--color-S);
-  opacity: 0.8;
-}
-
-.grid-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
-
-/* ======================== */
-/* CHARTS & DATA VISUALIZATION */
-/* ======================== */
-
-.chart-container {
-  position: relative;
-  margin: 2rem auto;
-  max-width: 800px;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
-
-canvas {
-  max-height: 400px;
-  min-height: 300px;
-  width: 100% !important;
-}
-
-/* ======================== */
-/* COMPARISON SYSTEM */
-/* ======================== */
-
-.comparison-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
-
-.comparison-section {
-  display: none;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-.comparison-section.active {
-  display: flex !important;
-  flex-wrap: wrap;
-}
-
-input[type="date"],
-input[type="week"],
-input[type="month"] {
-  padding: 0.5rem;
-  margin: 0 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  min-width: 200px;
-}
-
-.compare-btn {
-  padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* ======================== */
-/* DATA MANAGEMENT & STATUS */
-/* ======================== */
-
-.data-actions {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  gap: 10px;
-}
-
-.data-actions button {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  font-size: 1.2rem;
-  box-shadow: var(--shadow);
-  transition: var(--transition);
-}
-
-.offline-warning {
-  background: var(--warning-color);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 25px;
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* ======================== */
-/* INSTALL PROMPT */
-/* ======================== */
-
-.install-prompt {
-  position: fixed;
-  bottom: 2rem;
-  left: 2rem;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-  display: none;
-  flex-direction: column;
-  gap: 1rem;
-  z-index: 1000;
-  max-width: 300px;
-}
-
-.install-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-.primary-btn {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.secondary-btn {
-  background-color: #eee;
-  color: var(--text-color);
-}
-
-/* ======================== */
-/* FOOTER */
-/* ======================== */
-
-footer {
-  text-align: center;
-  padding: 1.5rem;
-  background: var(--primary-color);
-  color: white;
-  margin-top: 3rem;
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-}
-
-/* ======================== */
-/* RESPONSIVE DESIGN */
-/* ======================== */
-
-@media (max-width: 768px) {
-  .grid-container {
-    grid-template-columns: repeat(6, 1fr);
+  // Initialize new day with sleep hours
+  if (!appData.timeData[currentDate]) {
+    appData.timeData[currentDate] = timeIntervals.map((time, index) => ({
+      time,
+      value: (index >= appData.settings.sleepHours.start && index <= appData.settings.sleepHours.end) ? 'S' : null,
+      timestamp: null
+    }));
+    saveToStorage();
   }
+  
+  appData.timeData[currentDate].forEach((slot, index) => {
+    const gridItem = document.createElement('div');
+    gridItem.className = `grid-item ${slot.value ? 'filled' : ''}`;
+    gridItem.textContent = slot.value ? `${slot.time} - ${slot.value}` : slot.time;
+    if (slot.value) gridItem.dataset.value = slot.value;
+    
+    gridItem.addEventListener('click', () => handleSlotClick(index));
+    gridContainer.appendChild(gridItem);
+  });
+}
 
-  nav ul {
-    gap: 0.75rem;
+// ========================
+// SLOT INTERACTION
+// ========================
+function handleSlotClick(index) {
+  const currentDate = getCurrentDate();
+  const slot = appData.timeData[currentDate][index];
+  
+  // Prevent editing sleep hours
+  if (index >= appData.settings.sleepHours.start && index <= appData.settings.sleepHours.end) {
+    alert("Sleep hours cannot be edited");
+    return;
   }
-
-  .view-section {
-    padding: 1rem;
-  }
-
-  .chart-container {
-    margin: 1rem;
-    padding: 0.5rem;
-  }
-
-  canvas {
-    min-height: 250px;
+  
+  const now = new Date();
+  const slotTime = new Date();
+  slotTime.setHours(Math.floor(index / 2));
+  slotTime.setMinutes(index % 2 === 0 ? 0 : 30);
+  
+  const minTime = new Date(slotTime);
+  minTime.setMinutes(minTime.getMinutes() - appData.settings.reminderTime);
+  
+  const maxTime = new Date(slotTime);
+  maxTime.setMinutes(maxTime.getMinutes() + 30);
+  
+  if (now >= minTime && now <= maxTime) {
+    const value = prompt('Enter category (A-F):', slot.value || '').toUpperCase();
+    if (value && categories.includes(value)) {
+      slot.value = value;
+      slot.timestamp = new Date().toISOString();
+      saveToStorage();
+      initializeTimeGrid();
+      initializeCharts();
+    }
+  } else {
+    alert('This time slot is not currently available for editing');
   }
 }
 
-@media (max-width: 480px) {
-  .grid-container {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.25rem;
-    padding: 0.5rem;
-  }
+// ========================
+// CHARTING SYSTEM
+// ========================
+let weeklyChart, monthlyChart, comparisonChart;
 
-  header h1 {
-    font-size: 1.5rem;
-  }
+function getColor(value) {
+  const colors = {
+    A: '#4CAF50', B: '#2196F3', C: '#9C27B0',
+    D: '#FF9800', E: '#E91E63', F: '#F44336', S: '#607D8B'
+  };
+  return colors[value];
+}
 
-  nav ul li a {
-    font-size: 0.9rem;
-    padding: 0.25rem;
-  }
+function getWeekNumber(dateString) {
+  const date = new Date(dateString);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 4 - (date.getDay() || 7));
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+}
 
-  .data-actions {
-    bottom: 1rem;
-    right: 1rem;
-  }
+function getChartData(timePeriod, isMonthly = false) {
+  const data = {};
+  const categoryCounts = {};
+  
+  Object.keys(appData.timeData).forEach(date => {
+    const key = isMonthly ? date.substring(0, 7) : getWeekNumber(date);
+    
+    if (!data[key]) {
+      data[key] = { label: isMonthly ? key : `Week ${key}`, categories: {} };
+      categories.forEach(c => data[key].categories[c] = 0);
+    }
+    
+    appData.timeData[date].forEach(slot => {
+      if (slot.value) data[key].categories[slot.value]++;
+    });
+  });
+  
+  const labels = Object.keys(data).sort().map(k => data[k].label);
+  categories.forEach(c => {
+    categoryCounts[c] = labels.map(label => 
+      data[Object.keys(data).find(k => data[k].label === label)].categories[c]
+    );
+  });
+  
+  return {
+    labels,
+    datasets: categories.map(c => ({
+      label: c,
+      data: categoryCounts[c],
+      backgroundColor: getColor(c),
+      borderColor: getColor(c),
+      fill: isMonthly
+    }))
+  };
+}
 
-  input[type="date"],
-  input[type="week"],
-  input[type="month"] {
-    width: 100%;
-    min-width: auto;
-  }
+// ========================
+// INITIALIZATION
+// ========================
+function initializeCharts() {
+  [weeklyChart, monthlyChart, comparisonChart].forEach(chart => {
+    if (chart) chart.destroy();
+  });
+  
+  weeklyChart = new Chart(document.getElementById('weekly-chart'), {
+    type: 'bar',
+    data: getChartData('week'),
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Weekly Category Breakdown' },
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+  
+  monthlyChart = new Chart(document.getElementById('monthly-chart'), {
+    type: 'line',
+    data: getChartData('month', true),
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Monthly Progress' },
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+  
+  comparisonChart = new Chart(document.getElementById('comparison-chart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Detailed Comparison' },
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+}
 
-  .install-prompt {
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 1rem;
-    width: 90%;
+// ========================
+// DATE SYNCHRONIZATION
+// ========================
+function checkDateChange() {
+  const currentDate = getCurrentDate();
+  if (!appData.timeData[currentDate]) {
+    initializeTimeGrid();
+    initializeCharts();
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeTimeGrid();
+  initializeCharts();
+  setInterval(checkDateChange, 60000);
+  
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('Service Worker registered'))
+      .catch(err => console.log('SW registration failed:', err));
+  }
+  
+  window.addEventListener('online', () => {
+    document.querySelector('.offline-warning').style.display = 'none';
+  });
+  
+  window.addEventListener('offline', () => {
+    document.querySelector('.offline-warning').style.display = 'block';
+  });
+});
