@@ -1,29 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Smart Time Tracker</title>
-  <meta name="theme-color" content="#4CAF50">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
+
+  <!-- Theme & Manifest -->
+  <meta name="theme-color" content="#4CAF50"/>
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Styles & Icons -->
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://kit.fontawesome.com/a076d05399.js"></script>
 </head>
 <body>
+  <!-- Header / Navigation -->
   <header>
     <h1><i class="fas fa-clock"></i> Smart Time Tracker</h1>
     <nav>
       <ul>
-        <li><a href="#day" aria-label="Daily view"><i class="fas fa-calendar-day"></i> Today</a></li>
-        <li><a href="#week" aria-label="Weekly view"><i class="fas fa-chart-bar"></i> Week</a></li>
-        <li><a href="#month" aria-label="Monthly view"><i class="fas fa-chart-line"></i> Month</a></li>
-        <li><a href="#compare" aria-label="Comparison view"><i class="fas fa-exchange-alt"></i> Compare</a></li>
+        <li>
+          <a href="#day" aria-label="Daily view">
+            <i class="fas fa-calendar-day"></i> Today
+          </a>
+        </li>
+        <li>
+          <a href="#week" aria-label="Weekly view">
+            <i class="fas fa-chart-bar"></i> Week
+          </a>
+        </li>
+        <li>
+          <a href="#month" aria-label="Monthly view">
+            <i class="fas fa-chart-line"></i> Month
+          </a>
+        </li>
+        <li>
+          <a href="#compare" aria-label="Comparison view">
+            <i class="fas fa-exchange-alt"></i> Compare
+          </a>
+        </li>
       </ul>
     </nav>
   </header>
 
-  <!-- System Status Indicators -->
+  <!-- Status Bar -->
   <div class="status-bar">
     <span id="current-date" class="date-indicator"></span>
     <div class="offline-warning" style="display: none;">
@@ -31,29 +52,36 @@
     </div>
   </div>
 
-  <!-- Main Content Sections -->
+  <!-- Main Content -->
   <main>
+    <!-- Daily View -->
     <section id="day" class="view-section">
       <h2><i class="fas fa-calendar-day"></i> Daily Time Slots</h2>
       <div class="time-info">
-        <p>Sleep hours (12:30 AM - 6:00 AM) are auto-filled with <span class="s-label">S</span></p>
+        <p>
+          Sleep hours (12:30 AM - 6:00 AM) are auto-filled with 
+          <span class="s-label">S</span>
+        </p>
       </div>
       <div id="time-grid" class="grid-container"></div>
     </section>
 
+    <!-- Weekly Chart -->
     <section id="week" class="view-section">
       <h2><i class="fas fa-chart-bar"></i> Weekly Category Breakdown</h2>
       <canvas id="weekly-chart" aria-label="Weekly activity chart"></canvas>
     </section>
 
+    <!-- Monthly Chart -->
     <section id="month" class="view-section">
       <h2><i class="fas fa-chart-line"></i> Monthly Progress</h2>
       <canvas id="monthly-chart" aria-label="Monthly progress chart"></canvas>
     </section>
 
-    <!-- Enhanced Comparison Section -->
+    <!-- Detailed Comparison -->
     <section id="compare" class="view-section">
       <h2><i class="fas fa-exchange-alt"></i> Detailed Comparison</h2>
+
       <div class="comparison-options">
         <div class="comparison-controls">
           <label for="compare-type">Compare by:</label>
@@ -64,35 +92,39 @@
           </select>
         </div>
 
+        <!-- Day vs Day -->
         <div id="day-comparison" class="comparison-section">
           <div class="date-picker-group">
-            <input type="date" id="first-day" aria-label="Select first date">
-            <input type="date" id="second-day" aria-label="Select second date">
+            <input type="date" id="first-day" aria-label="Select first date" />
+            <input type="date" id="second-day" aria-label="Select second date" />
           </div>
           <button id="compare-days" class="compare-btn">Compare Days</button>
         </div>
 
+        <!-- Week vs Week -->
         <div id="week-comparison" class="comparison-section">
           <div class="date-picker-group">
-            <input type="week" id="first-week" aria-label="Select first week">
-            <input type="week" id="second-week" aria-label="Select second week">
+            <input type="week" id="first-week" aria-label="Select first week" />
+            <input type="week" id="second-week" aria-label="Select second week" />
           </div>
           <button id="compare-weeks" class="compare-btn">Compare Weeks</button>
         </div>
 
+        <!-- Month vs Month -->
         <div id="month-comparison" class="comparison-section">
           <div class="date-picker-group">
-            <input type="month" id="first-month" aria-label="Select first month">
-            <input type="month" id="second-month" aria-label="Select second month">
+            <input type="month" id="first-month" aria-label="Select first month" />
+            <input type="month" id="second-month" aria-label="Select second month" />
           </div>
           <button id="compare-months" class="compare-btn">Compare Months</button>
         </div>
       </div>
+
       <canvas id="comparison-chart" aria-label="Comparison results chart"></canvas>
     </section>
   </main>
 
-  <!-- Data Management Section -->
+  <!-- Data Management (Export/Import) -->
   <div class="data-actions">
     <button onclick="exportData()" title="Export Data" aria-label="Export data">
       <i class="fas fa-download"></i>
@@ -100,15 +132,25 @@
     <button onclick="importData()" title="Import Data" aria-label="Import data">
       <i class="fas fa-upload"></i>
     </button>
-    <input type="file" id="import-file" hidden accept=".json">
+    <input type="file" id="import-file" hidden accept=".json" />
   </div>
 
+  <!-- Footer -->
   <footer>
-    <p>&copy; 2024 Smart Time Tracker | <span class="sync-status">Auto-synced with calendar</span></p>
+    <p>
+      &copy; 2024 Smart Time Tracker |
+      <span class="sync-status">Auto-synced with calendar</span>
+    </p>
   </footer>
 
   <!-- App Installation Prompt -->
-  <div id="installPrompt" class="install-prompt" style="display: none;" role="dialog" aria-labelledby="installHeading">
+  <div
+    id="installPrompt"
+    class="install-prompt"
+    style="display: none;"
+    role="dialog"
+    aria-labelledby="installHeading"
+  >
     <h3 id="installHeading">Install App</h3>
     <p>Get the best experience by installing to your home screen!</p>
     <div class="install-buttons">
@@ -117,54 +159,67 @@
     </div>
   </div>
 
+  <!-- Main Script -->
   <script src="script.js"></script>
+
+  <!-- Service Worker Registration + Optional Date Indicator -->
   <script>
-    // Enhanced Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-        .then(registration => {
-          console.log('ServiceWorker registered with scope:', registration.scope);
-          registration.update();
-        }).catch(err => {
-          console.error('ServiceWorker registration failed:', err);
-        });
+    // Register the service worker when the window loads
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("sw.js")
+          .then((registration) => {
+            console.log("ServiceWorker registered with scope:", registration.scope);
+            registration.update();
+          })
+          .catch((err) => {
+            console.error("ServiceWorker registration failed:", err);
+          });
       });
     }
 
-    // Date Indicator
+    // Update Date Indicator
     function updateDate() {
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', options);
+      const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      };
+      document.getElementById("current-date").textContent = new Date().toLocaleDateString(
+        "en-US",
+        options
+      );
     }
     updateDate();
     setInterval(updateDate, 60000);
 
-    // Install Prompt Handling
+    // Handle App Install Prompt
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      const prompt = document.getElementById('installPrompt');
-      prompt.style.display = 'block';
-      prompt.setAttribute('aria-hidden', 'false');
+      const prompt = document.getElementById("installPrompt");
+      prompt.style.display = "block";
+      prompt.setAttribute("aria-hidden", "false");
     });
 
-    document.getElementById('installButton').addEventListener('click', () => {
+    document.getElementById("installButton").addEventListener("click", () => {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(choiceResult => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted install');
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === "accepted") {
+          console.log("User accepted install");
         }
         deferredPrompt = null;
-        document.getElementById('installPrompt').style.display = 'none';
+        document.getElementById("installPrompt").style.display = "none";
       });
     });
 
     function dismissInstall() {
-      const prompt = document.getElementById('installPrompt');
-      prompt.style.display = 'none';
-      prompt.setAttribute('aria-hidden', 'true');
+      const prompt = document.getElementById("installPrompt");
+      prompt.style.display = "none";
+      prompt.setAttribute("aria-hidden", "true");
     }
   </script>
 </body>
