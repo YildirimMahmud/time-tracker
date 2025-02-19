@@ -36,6 +36,49 @@ function saveToStorage() {
 }
 
 // ========================
+// DATA EXPORT/IMPORT
+// ========================
+
+function exportData() {
+  const dataStr = JSON.stringify(appData.timeData);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `timetracker-data-${getCurrentDate()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.getElementById('import-file');
+  input.click();
+
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = event => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        appData.timeData = importedData;
+        saveToStorage();
+        initializeTimeGrid();
+        initializeCharts();
+        alert('Data imported successfully!');
+      } catch (err) {
+        alert('Invalid data file');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+}
+
+// ========================
 // TIME GRID MANAGEMENT
 // ========================
 
@@ -94,9 +137,9 @@ function handleSlotClick(index) {
   maxTime.setMinutes(maxTime.getMinutes() + 30);
 
   if (now >= minTime && now <= maxTime) {
-    const value = prompt('Enter category (A-F):', slot.value || '').toUpperCase();
-    if (value && categories.includes(value)) {
-      slot.value = value;
+    const value = prompt('Enter category (A-F):', slot.value || '');
+    if (value && categories.includes(value.toUpperCase())) {
+      slot.value = value.toUpperCase();
       slot.timestamp = new Date().toISOString();
       saveToStorage();
       initializeTimeGrid();
@@ -142,15 +185,18 @@ function getChartData(timePeriod, isMonthly = false) {
     }
     
     appData.timeData[date].forEach(slot => {
-      if (slot.value) data[key].categories[slot.value]++;
+      if (slot.value) {
+        data[key].categories[slot.value] = (data[key].categories[slot.value] || 0) + 1;
+      }
     });
   });
 
   const labels = Object.keys(data).sort().map(k => data[k].label);
   categories.forEach(c => {
-    categoryCounts[c] = labels.map(label => 
-      data[Object.keys(data).find(k => data[k].label === label)].categories[c]
-    );
+    categoryCounts[c] = labels.map(label => {
+      const key = Object.keys(data).find(k => data[k].label === label);
+      return key ? data[key].categories[c] : 0;
+    });
   });
 
   return {
@@ -169,29 +215,54 @@ function getChartData(timePeriod, isMonthly = false) {
 // COMPARISON SYSTEM
 // ========================
 
+// Event listeners for comparison buttons
+document.getElementById('compare-days').addEventListener('click', () => {
+  const date1 = document.getElementById('first-day').value;
+  const date2 = document.getElementById('second-day').value;
+  updateComparisonChart([date1, date2]);
+});
+
+document.getElementById('compare-weeks').addEventListener('click', () => {
+  const week1 = document.getElementById('first-week').value;
+  const week2 = document.getElementById('second-week').value;
+  updateComparisonChart([`Week ${getWeekNumber(week1)}`, `Week ${getWeekNumber(week2)}`]);
+});
+
+document.getElementById('compare-months').addEventListener('click', () => {
+  const month1 = document.getElementById('first-month').value;
+  const month2 = document.getElementById('second-month').value;
+  updateComparisonChart([month1, month2]);
+});
+
+// Modified comparison function
 function updateComparisonChart(labels) {
   const datasets = [];
   
   labels.forEach(label => {
     let dataPoints = [];
+    
     if (label.startsWith('Week')) {
-      const weekNumber = label.split(' ')[1];
+      // Expect label in format "Week <number>"
+      const weekNumber = parseInt(label.split(' ')[1]);
       dataPoints = Object.keys(appData.timeData)
-        .filter(date => getWeekNumber(date) === parseInt(weekNumber))
+        .filter(date => getWeekNumber(date) === weekNumber)
         .flatMap(date => appData.timeData[date]);
-    } else if (label.includes('-')) {
-      dataPoints = Object.keys(appData.timeData)
-        .filter(date => date.startsWith(label))
-        .flatMap(date => appData.timeData[date]);
-    } else {
+    }
+    else if (label.includes('-')) { // Direct date comparison
       dataPoints = appData.timeData[label] || [];
+    }
+    else if (label.includes('/')) { // Month comparison (expects format with '/')
+      dataPoints = Object.keys(appData.timeData)
+        .filter(date => date.startsWith(label.replace('/', '-')))
+        .flatMap(date => appData.timeData[date]);
     }
 
     categories.forEach(c => {
       datasets.push({
         label: `${label} - ${c}`,
         data: [dataPoints.filter(slot => slot.value === c).length],
-        backgroundColor: getColor(c)
+        backgroundColor: getColor(c),
+        borderColor: getColor(c)
       });
     });
   });
@@ -263,7 +334,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeTimeGrid();
   initializeCharts();
   setInterval(checkDateChange, 60000);
-  setInterval(autoFillMissedSlots, 300000);
+  // If autoFillMissedSlots is defined, it will run every 5 minutes.
+  if (typeof autoFillMissedSlots === "function") {
+    setInterval(autoFillMissedSlots, 300000);
+  }
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
